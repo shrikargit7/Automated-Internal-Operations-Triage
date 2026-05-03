@@ -162,14 +162,3 @@ Title | Category | Effort | Priority | Owner | Team | Requester | Route | Reason
 **Route:** Fast Track → logged to Google Sheets immediately
 
 ---
-
-## Key Design Decisions
-
-**Why Claude Haiku over GPT-4?**
-Cost efficiency. At ~$0.0001 per classification, this pipeline can triage thousands of requests per month for under $1. GPT-4 would cost 100x more for the same task.
-
-**Why a JavaScript sanitization layer?**
-Claude occasionally wraps JSON responses in markdown code fences even when instructed not to. Rather than relying on prompt engineering alone, the Code node defensively strips formatting before parsing — making the pipeline production-reliable regardless of model behavior.
-
-**Why Zapier for delivery instead of n8n native Google Sheets?**
-In a production environment, Zapier's delivery layer allows non-technical ops teammates to manage and modify the logging destination without touching the n8n workflow. Separation of concerns between logic (n8n) and delivery (Zapier) makes the system easier to maintain.

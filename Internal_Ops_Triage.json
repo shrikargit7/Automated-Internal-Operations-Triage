@@ -1,0 +1,356 @@
+{
+  "name": "Internal_Ops_Triage",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-ops-triage",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "48573391-394a-4bdb-8302-6abc9942fabd",
+      "name": "Webhook",
+      "webhookId": "45618260-4541-4c28-9413-80d9dc88e2cb"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4b35031a-44cd-4f08-845d-306fc45ae004",
+              "name": "problem_statement",
+              "value": "={{$json[\"body\"][\"form_response\"][\"answers\"][0][\"text\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "f0c6725c-fc17-40b7-9b16-683e8320b7bc",
+              "name": "team",
+              "value": "={{$json[\"body\"][\"form_response\"][\"answers\"][1][\"choice\"][\"label\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "9b693a06-a821-4386-9c6c-31f47d143cdc",
+              "name": "frequency",
+              "value": "={{$json[\"body\"][\"form_response\"][\"answers\"][2][\"choice\"][\"label\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "ec55222d-441c-4d0b-83a6-d6b8a26e1985",
+              "name": "pain_level",
+              "value": "={{$json[\"body\"][\"form_response\"][\"answers\"][3][\"choice\"][\"label\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "a3208c43-0c55-4e5b-b589-f0339f3e007f",
+              "name": "success_criteria",
+              "value": "={{$json[\"body\"][\"form_response\"][\"answers\"][4][\"text\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "c65a578c-ac77-4fa5-aee8-4ee87b727bf8",
+              "name": "requester",
+              "value": "={{$json[\"body\"][\"form_response\"][\"answers\"][5][\"text\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        0
+      ],
+      "id": "c0abf7ef-ccaf-4e60-b35c-ce1a66724835",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $input.first().json.content[0].text;\n\nconst cleaned = rawText\n  .replace(/```json\\n/g, '')\n  .replace(/```/g, '')\n  .trim();\n\nconst parsed = JSON.parse(cleaned);\n\nreturn [{\n  json: {\n    ai_category: parsed.category,\n    ai_effort: parsed.effort,\n    ai_priority: parsed.priority,\n    ai_owner: parsed.suggested_owner,\n    ai_summary: parsed.one_line_summary,\n    ai_reasoning: parsed.reasoning\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "2583c5dd-a92b-4f43-aa8d-6c8cb1399a28",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ea0fad8a-150c-4faa-862f-2b0a3934880d",
+                    "leftValue": "={{$json.ai_owner}}",
+                    "rightValue": "AI_OPS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "8c6ede68-cd63-40fa-91d5-dd3dcb00998a",
+                    "leftValue": "= {{$json.ai_owner}}",
+                    "rightValue": "ENGINEERING",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f6f72d38-9f13-4e96-a22e-814f2eeed2bb",
+                    "leftValue": "={{$json.ai_owner}}",
+                    "rightValue": "SELF_SERVE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": 0
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        832,
+        -16
+      ],
+      "id": "a3373864-fa27-48e8-a094-6595f08daf86",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.zapier.com/hooks/catch/26579923/ucvvzl9/",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"route\": \"fast_track\",\n  \"requester\": \"{{ $json.requester }}\",\n  \"team\": \"{{ $json.team }}\",\n  \"summary\": \"{{ $json.ai_summary }}\",\n  \"category\": \"{{ $json.ai_category }}\",\n  \"effort\": \"{{ $json.ai_effort }}\",\n  \"priority\": \"{{ $json.ai_priority }}\",\n  \"owner\": \"{{ $json.ai_owner }}\",\n  \"reasoning\": \"{{ $json.ai_reasoning }}\",\n  \"original_problem\": \"{{ $json.problem_statement }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1072,
+        -208
+      ],
+      "id": "3e994aab-2217-4baf-b7c4-59e6ea13647f",
+      "name": "Fast_track"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.zapier.com/hooks/catch/26579923/ucvvzl9/",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"route\": \"needs_review\",\n  \"requester\": \"{{ $json.requester }}\",\n  \"team\": \"{{ $json.team }}\",\n  \"summary\": \"{{ $json.ai_summary }}\",\n  \"category\": \"{{ $json.ai_category }}\",\n  \"effort\": \"{{ $json.ai_effort }}\",\n  \"priority\": \"{{ $json.ai_priority }}\",\n  \"owner\": \"{{ $json.ai_owner }}\",\n  \"reasoning\": \"{{ $json.ai_reasoning }}\",\n  \"original_problem\": \"{{ $json.problem_statement }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1072,
+        0
+      ],
+      "id": "4252f629-5bea-4cab-b33c-d908af047c50",
+      "name": "Needs_review"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.zapier.com/hooks/catch/26579923/ucvvzl9/",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"route\": \"self_serve\",\n  \"requester\": \"{{ $json.requester }}\",\n  \"team\": \"{{ $json.team }}\",\n  \"summary\": \"{{ $json.ai_summary }}\",\n  \"category\": \"{{ $json.ai_category }}\",\n  \"effort\": \"{{ $json.ai_effort }}\",\n  \"priority\": \"{{ $json.ai_priority }}\",\n  \"owner\": \"{{ $json.ai_owner }}\",\n  \"reasoning\": \"{{ $json.ai_reasoning }}\",\n  \"original_problem\": \"{{ $json.problem_statement }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1072,
+        208
+      ],
+      "id": "5bae4d79-2f0b-4ec4-8bb9-c5ae14bf0d06",
+      "name": "Self_serve"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 1000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"You are an AI Ops analyst at a B2B SaaS company. Triage this request and return JSON with these exact fields:\\n- category: one of [AUTOMATION, PROMPT_ENGINEERING, DATA_PIPELINE, BUG_FIX, INTEGRATION, OTHER]\\n- effort: one of [SMALL, MEDIUM, LARGE] where SMALL is under 2hrs, MEDIUM is 2-8hrs, LARGE is 8+ hrs\\n- priority: one of [HIGH, MEDIUM, LOW]\\n- suggested_owner: one of [AI_OPS, ENGINEERING, SELF_SERVE]\\n- one_line_summary: plain English, max 15 words\\n- reasoning: 1 sentence explaining your priority call\\n\\nCRITICAL: Return raw JSON only. No markdown, no code fences, no backticks, no explanation.\\n\\nProblem: {{ $json.problem_statement }}\\nTeam: {{ $json.team }}\\nFrequency: {{ $json.frequency }}\\nPain level: {{ $json.pain_level }}\\nSuccess criteria: {{ $json.success_criteria }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "63d7eb96-60f9-4168-8d01-94b95e8488c1",
+      "name": "ClaudeAPI",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "9Z6S1aprNvpBm1nC",
+          "name": "Bearer Auth account"
+        },
+        "anthropicApi": {
+          "id": "Dq2dY9RW2xiS6g2q",
+          "name": "Anthropic account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "ClaudeAPI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Fast_track",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Needs_review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Self_serve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ClaudeAPI": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4ef794d5-f32d-47f1-9833-d8740508ffb5",
+  "meta": {
+    "instanceId": "0e0ab2ae97f5b69fee3f02a8865ad6619f4c1b6cc5c6d314932ac005be412b88"
+  },
+  "id": "mCsxpsoByu3R8dPz",
+  "tags": []
+}
